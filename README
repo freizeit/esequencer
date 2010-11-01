@@ -1,0 +1,11 @@
+A simple utility that prepends audio files with a numeric prefix "NNNNN-".
+
+Example:
+
+$ ~/src/esequencer/main.escript The\ Dev\ Show/
+
+>> The Dev Show/
+    * devshow-025.mp3 -> 00001-devshow-025.mp3
+    * devshow-026.mp3 -> 00002-devshow-026.mp3
+    * devshow-027.mp3 -> 00003-devshow-027.mp3
+    * devshow-028.mp3 -> 00004-devshow-028.mp3
