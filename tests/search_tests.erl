@@ -54,8 +54,8 @@ test_audio_files_with_mp3(T) ->
 test_audio_files_with_sequenced_mp3(T) ->
     {".mp3 files are returned",
      fun() ->
-        setup(T, [], ["a.mp3 @ 00004-a.mp3", "x.pdf"]),
-        ?assertEqual({ok, ["a.mp3"]}, search:audio_files(T))
+        setup(T, [], ["00004-a.mp3 @ a.mp3", "x.pdf"]),
+        ?assertEqual({ok, ["00004-a.mp3"]}, search:audio_files(T))
      end}.
 
 test_audio_files_with_ogg(T) ->
@@ -68,8 +68,8 @@ test_audio_files_with_ogg(T) ->
 test_audio_files_with_sequenced_ogg(T) ->
     {".ogg files are returned",
      fun() ->
-        setup(T, [], ["a.ogg @ 002-a.ogg", "x.pdf"]),
-        ?assertEqual({ok, ["a.ogg"]}, search:audio_files(T))
+        setup(T, [], ["002-a.ogg @ a.ogg", "x.pdf"]),
+        ?assertEqual({ok, ["002-a.ogg"]}, search:audio_files(T))
      end}.
 
 test_audio_files_with_flac(T) ->
@@ -82,8 +82,8 @@ test_audio_files_with_flac(T) ->
 test_audio_files_with_sequenced_flac(T) ->
     {".flac files are returned",
      fun() ->
-        setup(T, [], ["a.flac @ 01-a.flac", "x.pdf"]),
-        ?assertEqual({ok, ["a.flac"]}, search:audio_files(T))
+        setup(T, [], ["01-a.flac @ a.flac", "x.pdf"]),
+        ?assertEqual({ok, ["01-a.flac"]}, search:audio_files(T))
      end}.
 
 test_audio_files_with_mpa(T) ->
@@ -96,8 +96,8 @@ test_audio_files_with_mpa(T) ->
 test_audio_files_with_sequenced_mpa(T) ->
     {".mpa files are returned",
      fun() ->
-        setup(T, [], ["a.mpa @ 0003-a.mpa", "x.pdf"]),
-        ?assertEqual({ok, ["a.mpa"]}, search:audio_files(T))
+        setup(T, [], ["0003-a.mpa @ a.mpa", "x.pdf"]),
+        ?assertEqual({ok, ["0003-a.mpa"]}, search:audio_files(T))
      end}.
 
 test_audio_files_with_multiple_same_kind(T) ->

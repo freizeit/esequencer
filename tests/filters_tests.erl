@@ -51,10 +51,10 @@ unsequenced_files_with_empty_files_list_test() ->
     ?assertEqual([], filters:unsequenced_files([])).
 
 unsequenced_files_with_all_sequenced_test() ->
-    ?assertEqual([], filters:unsequenced_files(["0-a", "01-b"])).
+    ?assertEqual([], filters:unsequenced_files(["0-a @ a", "01-b @ b"])).
 
 unsequenced_files_with_all_mixed_test() ->
-    ?assertEqual(["a-a"], filters:unsequenced_files(["a-a", "01-b"])).
+    ?assertEqual(["a-a"], filters:unsequenced_files(["a-a", "01-b @ b"])).
 
 unsequenced_files_with_all_unsequenced_test() ->
     ?assertEqual(["a-a", "b-b"], filters:unsequenced_files(["a-a", "b-b"])).
