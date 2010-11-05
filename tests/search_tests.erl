@@ -13,6 +13,7 @@ audio_files_test_() ->
      [
         fun test_audio_files_with_flac/1,
         fun test_audio_files_with_sequenced_flac/1,
+        fun test_audio_files_with_equal_mtime_sorts_on_filename/1,
         fun test_audio_files_with_matching_dirs/1,
         fun test_audio_files_with_matching_files_and_dirs/1,
         fun test_audio_files_with_mp3/1,
@@ -21,6 +22,7 @@ audio_files_test_() ->
         fun test_audio_files_with_sequenced_mpa/1,
         fun test_audio_files_with_multiple_different_kind/1,
         fun test_audio_files_with_multiple_same_kind/1,
+        fun test_audio_files_with_multiple_sorts_oldest_to_newest/1,
         fun test_audio_files_with_no_files/1,
         fun test_audio_files_with_non_directory_path/1,
         fun test_audio_files_with_non_existent_path/1,
@@ -150,3 +152,26 @@ test_audio_files_with_non_writable_directory(T) ->
         file:change_mode(T, 8#00400),
         ?assertMatch({error,_}, search:audio_files(T))
      end}.
+
+test_audio_files_with_multiple_sorts_oldest_to_newest(T) ->
+    {"All files with matching names are returned",
+     fun() ->
+        Fs = ["a.mp3", "b.mp3", "x.mp3"],
+        {_, _, FQFs} = setup(T, [], Fs),
+        lists:foreach(
+            fun({F, D}) -> file:change_time(F, {{2010, 11, D},{0,0,0}}) end,
+            lists:zip(FQFs, [25, 15, 5])),
+        ?assertEqual({ok, lists:reverse(Fs)}, search:audio_files(T))
+     end}.
+
+test_audio_files_with_equal_mtime_sorts_on_filename(T) ->
+    {"All files with matching names are returned",
+     fun() ->
+        Fs = ["a.mp3", "b.mp3", "x.mp3"],
+        {_, _, FQFs} = setup(T, [], Fs),
+        lists:foreach(
+            fun({F, D}) -> file:change_time(F, {{2010, 11, D},{0,0,0}}) end,
+            lists:zip(FQFs, [25, 25, 25])),
+        ?assertEqual({ok, Fs}, search:audio_files(T))
+     end}.
+

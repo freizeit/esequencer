@@ -1,5 +1,6 @@
 -module(search).
 -export([audio_files/1]).
+-include_lib("eunit/include/eunit.hrl").
 
 
 af_filter(F, A) ->
@@ -7,6 +8,7 @@ af_filter(F, A) ->
         true -> A;
         false -> [filename:basename(F)|A]
     end.
+
 
 % -----------------------------------------------------------------------------
 %% @doc Search for audio files in the path given. The following extensions
@@ -24,7 +26,19 @@ audio_files(Path) ->
                    Regex = "\.(flac|ogg|mp3|mpa)$",
                     Fs = filelib:fold_files(
                         Path, Regex, false, fun af_filter/2, []),
-                    {ok, lists:sort(Fs)};
+                    SortFunc = fun(F1, F2) ->
+                            P1 = filename:join(Path, F1),
+                            P2 = filename:join(Path, F2),
+                            {ok, I1} = file:read_file_info(P1),
+                            {ok, I2} = file:read_file_info(P2),
+                            % Compare the mtime (The last (local) time the file
+                            % was written).
+                            case element(6, I1) =:= element(6, I2) of
+                                true -> F1 =< F2;
+                                _ -> element(6, I1) =< element(6, I2)
+                            end
+                        end,
+                    {ok, lists:sort(SortFunc, Fs)};
                 not Ok ->
                     {error, Path ++ " is not a directory or wrong permissions"}
             end
