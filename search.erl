@@ -1,45 +1,50 @@
 -module(search).
 -export([audio_files/1]).
--include_lib("eunit/include/eunit.hrl").
-
-
-af_filter(F, A) ->
-    case util:is_link(F) of
-        true -> A;
-        false -> [filename:basename(F)|A]
-    end.
 
 
 % -----------------------------------------------------------------------------
 %% @doc Search for audio files in the path given. The following extensions
-%% are considered: (flac|ogg|mp3|mpa).
+%% are considered: (flac|ogg|mp3|mpa). The maximum sequence number in use
+%% is calculated in the same pass. Also, the already sequenced files are
+%% filtered.
 -spec audio_files(Path :: string()) -> {ok, [string()]} | {error, string()}.
 audio_files(Path) ->
     case file:read_link_info(Path) of
         {error, E} ->
             {error, Path ++ " is broken (" ++ atom_to_list(E) ++ ")"};
         {ok, FIT} ->
+            %% Is this a directory for which we have read/write access?
             Ok = element(3,FIT) =:= directory andalso
                  element(4,FIT) =:= read_write,
             if
-                Ok ->
-                   Regex = "\.(flac|ogg|mp3|mpa)$",
-                    Fs = filelib:fold_files(
-                        Path, Regex, false, fun af_filter/2, []),
-                    SortFunc = fun(F1, F2) ->
-                            P1 = filename:join(Path, F1),
-                            P2 = filename:join(Path, F2),
-                            {ok, I1} = file:read_file_info(P1),
-                            {ok, I2} = file:read_file_info(P2),
-                            % Compare the mtime (The last (local) time the file
-                            % was written).
-                            case element(6, I1) =:= element(6, I2) of
-                                true -> F1 =< F2;
-                                _ -> element(6, I1) =< element(6, I2)
-                            end
-                        end,
-                    {ok, lists:sort(SortFunc, Fs)};
+                Ok -> search_files(Path);
                 not Ok ->
                     {error, Path ++ " is not a directory or wrong permissions"}
             end
     end.
+
+
+search_files(Path) ->
+    % Compile the regex once only.
+    {ok, Seqnum_regex} = re:compile("^(?<SEQNUM>[0-9]+)-"),
+    Match_sequenced_file = fun(Fn) ->
+        re:run(Fn, Seqnum_regex, [{capture, ['SEQNUM'], list}])
+        end,
+    AF_filter = fun(F, {M, A}) ->
+        case util:is_link(F) of
+            true -> {M, A}; % Ignore symbolic links.
+            false -> % Regular file here.
+                Fn = filename:basename(F),
+                % Is file already sequenced?
+                case Match_sequenced_file(Fn) of
+                   % Yes, pick up the higher sequence number.
+                    {match, [S]} -> {max(list_to_integer(S), M), A};
+                    nomatch -> {M, [Fn|A]} % No, pick up the file.
+                end
+        end
+    end,
+    % Find the unsequenced audio files as well as the highest sequence
+    % number currently in use.
+    {Max_seqnum, Fs} = filelib:fold_files(
+        Path, "\.(flac|ogg|mp3|mpa)$", false, AF_filter, {0, []}),
+    {ok, {Max_seqnum, Fs}}.

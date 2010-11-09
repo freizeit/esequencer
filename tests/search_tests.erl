@@ -13,7 +13,6 @@ audio_files_test_() ->
      [
         fun test_audio_files_with_flac/1,
         fun test_audio_files_with_sequenced_flac/1,
-        fun test_audio_files_with_equal_mtime_sorts_on_filename/1,
         fun test_audio_files_with_matching_dirs/1,
         fun test_audio_files_with_matching_files_and_dirs/1,
         fun test_audio_files_with_mp3/1,
@@ -22,7 +21,6 @@ audio_files_test_() ->
         fun test_audio_files_with_sequenced_mpa/1,
         fun test_audio_files_with_multiple_different_kind/1,
         fun test_audio_files_with_multiple_same_kind/1,
-        fun test_audio_files_with_multiple_sorts_oldest_to_newest/1,
         fun test_audio_files_with_no_files/1,
         fun test_audio_files_with_non_directory_path/1,
         fun test_audio_files_with_non_existent_path/1,
@@ -36,70 +34,70 @@ audio_files_test_() ->
 test_audio_files_with_no_files(T) ->
     {"In the absence of any files an empty list is returned.",
      fun() ->
-        ?assertEqual({ok, []}, search:audio_files(T))
+        ?assertEqual({ok, {0, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_non_matching(T) ->
     {"Files with non-matching names are ignored.",
      fun() ->
         setup(T, [], ["a.txt", "x.pdf"]),
-        ?assertEqual({ok, []}, search:audio_files(T))
+        ?assertEqual({ok, {0, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_mp3(T) ->
     {".mp3 files are returned",
      fun() ->
         setup(T, [], ["a.mp3", "x.pdf"]),
-        ?assertEqual({ok, ["a.mp3"]}, search:audio_files(T))
+        ?assertEqual({ok, {0, ["a.mp3"]}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_sequenced_mp3(T) ->
-    {".mp3 files are returned",
+    {"sequenced .mp3 files are not returned",
      fun() ->
         setup(T, [], ["00004-a.mp3 @ a.mp3", "x.pdf"]),
-        ?assertEqual({ok, ["00004-a.mp3"]}, search:audio_files(T))
+        ?assertEqual({ok, {4, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_ogg(T) ->
     {".ogg files are returned",
      fun() ->
         setup(T, [], ["a.ogg", "x.pdf"]),
-        ?assertEqual({ok, ["a.ogg"]}, search:audio_files(T))
+        ?assertEqual({ok, {0, ["a.ogg"]}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_sequenced_ogg(T) ->
-    {".ogg files are returned",
+    {"sequenced .ogg files are not returned",
      fun() ->
         setup(T, [], ["002-a.ogg @ a.ogg", "x.pdf"]),
-        ?assertEqual({ok, ["002-a.ogg"]}, search:audio_files(T))
+        ?assertEqual({ok, {2, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_flac(T) ->
     {".flac files are returned",
      fun() ->
         setup(T, [], ["a.flac", "x.pdf"]),
-        ?assertEqual({ok, ["a.flac"]}, search:audio_files(T))
+        ?assertEqual({ok, {0, ["a.flac"]}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_sequenced_flac(T) ->
-    {".flac files are returned",
+    {"sequenced .flac files are not returned",
      fun() ->
         setup(T, [], ["01-a.flac @ a.flac", "x.pdf"]),
-        ?assertEqual({ok, ["01-a.flac"]}, search:audio_files(T))
+        ?assertEqual({ok, {1, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_mpa(T) ->
     {".mpa files are returned",
      fun() ->
         setup(T, [], ["a.mpa", "x.pdf"]),
-        ?assertEqual({ok, ["a.mpa"]}, search:audio_files(T))
+        ?assertEqual({ok, {0, ["a.mpa"]}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_sequenced_mpa(T) ->
-    {".mpa files are returned",
+    {"sequenced .mpa files are not returned",
      fun() ->
         setup(T, [], ["0003-a.mpa @ a.mpa", "x.pdf"]),
-        ?assertEqual({ok, ["0003-a.mpa"]}, search:audio_files(T))
+        ?assertEqual({ok, {3, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_multiple_same_kind(T) ->
@@ -107,28 +105,30 @@ test_audio_files_with_multiple_same_kind(T) ->
      fun() ->
         Fs = ["a.mp3", "x.mp3"],
         setup(T, [], Fs),
-        ?assertEqual({ok, Fs}, search:audio_files(T))
+        ?assertEqual({ok, {0, Fs}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_multiple_different_kind(T) ->
     {"All files with matching names are returned, irrespetive of extension.",
      fun() ->
         setup(T, [], ["a.mp3", "x.ogg", "c.pdf"]),
-        ?assertEqual({ok, ["a.mp3", "x.ogg"]}, search:audio_files(T))
+        {ok, {0, Fs}} = search:audio_files(T),
+        ?assertEqual(["a.mp3", "x.ogg"], lists:sort(Fs))
      end}.
 
 test_audio_files_with_matching_dirs(T) ->
     {"Directories with matching names are ignored.",
      fun() ->
         setup(T, ["a.mp3", "x.ogg", "c.pdf"], []),
-        ?assertEqual({ok, []}, search:audio_files(T))
+        ?assertEqual({ok, {0, []}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_matching_files_and_dirs(T) ->
     {"Only files with matching names are returned.",
      fun() ->
-        setup(T, ["a.mp3", "x.ogg", "c.pdf"], ["b.mp3", "c.pdf"]),
-        ?assertEqual({ok, ["b.mp3"]}, search:audio_files(T))
+        setup(
+            T, ["006-a.mp3", "007-c.pdf"], ["b.mp3", "02-c.ogg", "005-x.txt"]),
+        ?assertEqual({ok, {2, ["b.mp3"]}}, search:audio_files(T))
      end}.
 
 test_audio_files_with_non_existent_path(_) ->
@@ -152,26 +152,3 @@ test_audio_files_with_non_writable_directory(T) ->
         file:change_mode(T, 8#00400),
         ?assertMatch({error,_}, search:audio_files(T))
      end}.
-
-test_audio_files_with_multiple_sorts_oldest_to_newest(T) ->
-    {"All files with matching names are returned",
-     fun() ->
-        Fs = ["a.mp3", "b.mp3", "x.mp3"],
-        {_, _, FQFs} = setup(T, [], Fs),
-        lists:foreach(
-            fun({F, D}) -> file:change_time(F, {{2010, 11, D},{0,0,0}}) end,
-            lists:zip(FQFs, [25, 15, 5])),
-        ?assertEqual({ok, lists:reverse(Fs)}, search:audio_files(T))
-     end}.
-
-test_audio_files_with_equal_mtime_sorts_on_filename(T) ->
-    {"All files with matching names are returned",
-     fun() ->
-        Fs = ["a.mp3", "b.mp3", "x.mp3"],
-        {_, _, FQFs} = setup(T, [], Fs),
-        lists:foreach(
-            fun({F, D}) -> file:change_time(F, {{2010, 11, D},{0,0,0}}) end,
-            lists:zip(FQFs, [25, 25, 25])),
-        ?assertEqual({ok, Fs}, search:audio_files(T))
-     end}.
-

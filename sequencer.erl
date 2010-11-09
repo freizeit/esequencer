@@ -28,14 +28,13 @@ sequence_paths([P|Paths], Dryrun, Width) ->
 sequence_path(Path, Dryrun, Width) ->
     case search:audio_files(Path) of
         {error, E} -> {Path, [], [E]};
-        {ok, []} -> {Path, ["    * No audio files."], []};
-        {ok, As} ->
-            Us = filters:unsequenced_files(As),
-            case length(Us) =:= 0 of
+        {ok, []} -> {Path, ["    * Nothing to do."], []};
+        {ok, {Max_seqnum, As}} ->
+            case length(As) =:= 0 of
                 true -> {Path, ["    * Nothing to do."], []};
                 _ ->
-                    SN = util:max_sequence_number(As) + 1,
-                    Rs = util:sequence_files(Path, Us, SN, Dryrun, Width),
+                    Rs = util:sequence_files(
+                        Path, As, Max_seqnum + 1, Dryrun, Width),
                     {Ms, Es} = format_results(Rs, [], []),
                     {Path, Ms, Es}
             end

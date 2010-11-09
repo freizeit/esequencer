@@ -30,7 +30,7 @@ test_sequence_path_with_no_audio_files(T) ->
      fun() ->
         setup(T, [], ["a.txt", "b.pdf"]),
         ?assertEqual(
-            {T, ["    * No audio files."], []},
+            {T, ["    * Nothing to do."], []},
             sequencer:sequence_path(T, false, 5))
      end}.
 
